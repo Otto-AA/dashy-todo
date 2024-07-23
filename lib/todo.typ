@@ -1,4 +1,4 @@
-#import "place-in-page-margin.typ": place-in-page-margin
+#import "side-margin.typ": calculate-page-margin-box
 
 #let to-string(content) = {
   if type(content) == str {
@@ -14,40 +14,44 @@
   }
 }
 
-#let todo(body, position: auto) = box(context {
-  assert(position in (auto, left, right), message: "Can only position todo on the left or right side currently")
+#let todo(body, position: auto) = (
+  context box({
+    assert(position in (auto, left, right), message: "Can only position todo on the left or right side currently")
 
-  let text-position = here().position()
+    let text-position = here().position()
 
-  place-in-page-margin(cur-pos: text-position, position: position)[
-    // shift the box slightly upwards for styling reasons
-    #let shift-y = .5em
-    #move(dy: -shift-y)[
+    let side = position
+    if position == auto {
+      if text-position.x > page.width / 2 {
+        side = right
+      } else {
+        side = left
+      }
+    }
 
-      #box(inset: 4pt, width: 100%)[
+    let page-margin-box = calculate-page-margin-box(side)
+    let shift-y = .5em
+    let outer-box-inset = 4pt
+    let dx = page-margin-box.x - text-position.x
+
+    place(dx: dx, dy: -shift-y)[
+      #box(inset: outer-box-inset, width: page-margin-box.width)[
         #box(stroke: orange, width: 100%)[
-          #place(
-            layout(size => (
-              context {
-                let cur = here().position()
-                let is-left = cur.x < page.width / 2
+          #place({
+            // defaults for right side
+            let line-size = dx
+            let line-x = -line-size
+            let tick-x = -line-size
+            // overwrites for left side
+            if side == left {
+              line-size = calc.abs(dx) - page-margin-box.width + outer-box-inset
+              line-x = page-margin-box.width - outer-box-inset * 2
+              tick-x = calc.abs(dx) - outer-box-inset
+            }
 
-                // defaults for right side
-                let line-size = cur.x - text-position.x
-                let line-x = -line-size
-                let tick-x = -line-size
-                // overwrites for left side
-                if is-left {
-                  line-size = text-position.x - cur.x - size.width
-                  line-x = size.width
-                  tick-x = size.width + line-size
-                }
-
-                place(line(length: line-size, start: (line-x, shift-y), stroke: orange))
-                place(line(length: 4pt, start: (tick-x, shift-y), angle: -90deg, stroke: orange))
-              }
-            )),
-          )
+            place(line(length: line-size, start: (line-x, shift-y), stroke: orange))
+            place(line(length: 4pt, start: (tick-x, shift-y), angle: -90deg, stroke: orange))
+          })
           // the todo message
           #box(body, inset: 0.2em)
         ]
@@ -68,5 +72,5 @@
         )
       ]
     ]
-  ]
-})
+  })
+)
