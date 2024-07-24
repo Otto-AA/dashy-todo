@@ -4,6 +4,10 @@ Create TODO comments, which are displayed at the sides of the page.
 
 ![Screenshot](example.svg)
 
+## Limitations
+
+Currently, there is no prevention of TODOs being rendered on top of each other. See [here](https://github.com/Otto-AA/dashy-todo/issues/1) for more information.
+
 ## Usage
 
 The package provides a `todo(message, position: auto | left | right)` method. Call it anywhere you need a todo message.
