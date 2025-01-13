@@ -1,6 +1,8 @@
 # Dashy TODO
 
-Create TODO comments, which are displayed at the sides of the page.
+Create simple TODO comments, which are displayed at the sides of the page.
+
+I suggest to take a look at the [drafting package](https://typst.app/universe/package/drafting), which is a more feature-complete annotation library, but also suitable for simple TODO comments.
 
 ![Screenshot](example.svg)
 
