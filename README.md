@@ -15,7 +15,7 @@ Currently, there is no prevention of TODOs being rendered on top of each other. 
 The package provides a `todo(message, position: auto | left | right)` method. Call it anywhere you need a todo message.
 
 ```typst
-#import "@preview/dashy-todo:0.0.1": todo
+#import "@preview/dashy-todo:0.0.2": todo
 
 // It automatically goes to the closer side (left or right)
 A todo on the left #todo[On the left].
