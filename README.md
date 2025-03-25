@@ -20,7 +20,7 @@ The package provides a `todo(message, position: auto | left | right)` method. Ca
 // It automatically goes to the closer side (left or right)
 A todo on the left #todo[On the left].
 
-// You can specify a side if you want to
+// You can specify a position if you want to (auto, left, right or "inline")
 #todo(position: right)[Also right]
 
 // You can add arbitrary content

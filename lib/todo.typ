@@ -14,10 +14,31 @@
   }
 }
 
-#let todo(body, position: auto) = (
-  context box({
-    assert(position in (auto, left, right), message: "Can only position todo on the left or right side currently")
+#let outline-entry(body) = {
+  // invisible figure, s.t. we can reference it in the outline
+  // probably depends on https://github.com/typst/typst/issues/147 for a cleaner solution
+  hide(
+    box(
+      height: 0pt,
+      width: 0pt,
+      figure(
+        none,
+        kind: "todo",
+        supplement: [TODO],
+        caption: to-string(body),
+        outlined: true,
+      ),
+    ),
+  )
+}
 
+#let inline-todo(body) = {
+  box(stroke: orange, width: 100%, inset: 4pt)[#body]
+  outline-entry(body)
+}
+
+#let side-todo(body, position) = {
+  context box({
     let text-position = here().position()
 
     let side = position
@@ -55,22 +76,20 @@
           // the todo message
           #box(body, inset: 0.2em)
         ]
-        // invisible figure, s.t. we can reference it in the outline
-        // probably depends on https://github.com/typst/typst/issues/147 for a cleaner solution
-        #hide(
-          box(
-            height: 0pt,
-            width: 0pt,
-            figure(
-              none,
-              kind: "todo",
-              supplement: [TODO],
-              caption: to-string(body),
-              outlined: true,
-            ),
-          ),
-        )
+        #outline-entry(body)
       ]
     ]
   })
-)
+}
+
+#let todo(body, position: auto) = {
+  assert(
+    position in (auto, left, right, "inline"),
+    message: "Can only position todo either inline, or on the left or right side.",
+  )
+  if position == "inline" {
+    inline-todo(body)
+  } else {
+    side-todo(body, position)
+  }
+}
