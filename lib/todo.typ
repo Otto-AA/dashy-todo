@@ -1,3 +1,4 @@
+#import "box-placement.typ": calculate-box-positions
 #import "side-margin.typ": calculate-page-margin-box
 
 #let to-string(content) = {
@@ -53,32 +54,61 @@
     let page-margin-box = calculate-page-margin-box(side)
     let shift-y = .5em
     let outer-box-inset = 4pt
-    let dx = page-margin-box.x - text-position.x
 
-    place(dx: dx, dy: -shift-y)[
-      #box(inset: outer-box-inset, width: page-margin-box.width)[
-        #box(stroke: orange, width: 100%)[
-          #place({
-            // defaults for right side
-            let line-size = dx
-            let line-x = -line-size
-            let tick-x = -line-size
-            // overwrites for left side
-            if side == left {
-              line-size = calc.abs(dx) - page-margin-box.width + outer-box-inset
-              line-x = page-margin-box.width - outer-box-inset * 2
-              tick-x = calc.abs(dx) - outer-box-inset
-            }
-
-            place(line(length: line-size, start: (line-x, shift-y), stroke: orange))
-            place(line(length: 4pt, start: (tick-x, shift-y), angle: -90deg, stroke: orange))
-          })
-          // the todo message
-          #box(body, inset: 0.2em)
-        ]
-        #outline-entry(body)
+    // Create the todo box. It will later be measured to determine it's location
+    let todo-box = box(inset: outer-box-inset, width: page-margin-box.width)[
+      #box(stroke: orange, width: 100%)[
+        #box(body, inset: 0.2em)
       ]
     ]
+
+    // Create a state that accumulates all the todo box sizes of the current page
+    // There are two states per page. One for the boxes on the left, one for the boxes on the right
+    let boxes = state("dashy-todo-page-" + str(here().page()) + "-" + repr(side) + "-boxes", ())
+
+    let box-size = measure(todo-box)
+
+    // Register the box in the state and determine the index of the box within the state. This index will later be used to retrieve the final position for the box.
+    let box-index = boxes.get().len()
+    boxes.update(boxes => {
+      boxes.push((
+        height: box-size.height, // Height of the box in pt, including margins
+        preferred-pos: text-position.y - shift-y // Where is the ideal y-position for the box?
+      ))
+      return boxes
+    })
+
+    let boxes = boxes.final()
+    
+    if boxes.len() > 0 { // For some reason there can be situations where box-positions == 0 which would make the code below fail. This might likely a bug, but I cannot tell why it happens
+      let box-positions = calculate-box-positions(boxes)
+
+      // This place will shift the coordinate system so (0, 0) will address the top left corner of the page
+      place(dx: - text-position.x, dy: - text-position.y)[
+        // Retrieve the calculated position for the current box & render it
+        #let box-pos = box-positions.at(box-index)
+        #place(dx: page-margin-box.x, dy: box-pos.top)[#todo-box]
+
+        // Draw the tick mark within the text
+        #let line-margin = page-margin-box.x - text-position.x
+        #place[#line(start: (text-position.x, text-position.y), end: (text-position.x, text-position.y + shift-y), stroke: orange)]
+
+        // Horizontally connect the tick mark to the position of the box
+        #let box-border-x = if side == left {
+          page-margin-box.width - outer-box-inset
+        } else {
+          page-margin-box.x + outer-box-inset
+        }
+        #place[#line(start: (text-position.x, text-position.y + shift-y), end: (box-border-x, text-position.y + shift-y), stroke: orange)]
+
+        // If the box is above or below the line, connect it vertically
+        #if text-position.y + shift-y.to-absolute() < box-pos.top + outer-box-inset {
+          place[#line(start: (box-border-x, text-position.y + shift-y), end: (box-border-x, box-pos.top + outer-box-inset), stroke: orange)]
+        } else if text-position.y + shift-y.to-absolute() > box-pos.bottom - outer-box-inset {
+          place[#line(start: (box-border-x, text-position.y + shift-y), end: (box-border-x, box-pos.bottom - outer-box-inset), stroke: orange)]
+        }
+      ]
+    }
   })
 }
 
