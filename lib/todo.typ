@@ -39,7 +39,7 @@
 }
 
 #let side-todo(body, position) = {
-  context box({
+  box(context {
     let text-position = here().position()
 
     let side = position
@@ -79,8 +79,8 @@
     })
 
     let boxes = boxes.final()
-    
-    if boxes.len() > 0 { // For some reason there can be situations where box-positions == 0 which would make the code below fail. This might likely a bug, but I cannot tell why it happens
+
+    if boxes.len() > box-index { // The typst compiler will skip state updates during initial layout, leaving the list empty, leading to boxes.len() < box-index. To avoid compiler errors, we'll wait for the states to be updated before placing the boxes
       let box-positions = calculate-box-positions(boxes)
 
       // This place will shift the coordinate system so (0, 0) will address the top left corner of the page
