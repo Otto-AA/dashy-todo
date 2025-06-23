@@ -33,12 +33,12 @@
   )
 }
 
-#let inline-todo(body) = {
-  box(stroke: orange, width: 100%, inset: 4pt)[#body]
+#let inline-todo(body, stroke) = {
+  box(stroke: stroke, width: 100%, inset: 4pt)[#body]
   outline-entry(body)
 }
 
-#let side-todo(body, position) = {
+#let side-todo(body, position, stroke) = {
   box(context {
     let text-position = here().position()
 
@@ -57,7 +57,7 @@
 
     // Create the todo box. It will later be measured to determine it's location
     let todo-box = box(inset: outer-box-inset, width: page-margin-box.width)[
-      #box(stroke: orange, width: 100%)[
+      #box(stroke: stroke, width: 100%)[
         #box(body, inset: 0.2em)
       ]
     ]
@@ -91,7 +91,7 @@
 
         // Draw the tick mark within the text
         #let line-margin = page-margin-box.x - text-position.x
-        #place[#line(start: (text-position.x, text-position.y), end: (text-position.x, text-position.y + shift-y), stroke: orange)]
+        #place[#line(start: (text-position.x, text-position.y), end: (text-position.x, text-position.y + shift-y), stroke: stroke)]
 
         // Horizontally connect the tick mark to the position of the box
         #let box-border-x = if side == left {
@@ -99,27 +99,27 @@
         } else {
           page-margin-box.x + outer-box-inset
         }
-        #place[#line(start: (text-position.x, text-position.y + shift-y), end: (box-border-x, text-position.y + shift-y), stroke: orange)]
+        #place[#line(start: (text-position.x, text-position.y + shift-y), end: (box-border-x, text-position.y + shift-y), stroke: stroke)]
 
         // If the box is above or below the line, connect it vertically
         #if text-position.y + shift-y.to-absolute() < box-pos.top + outer-box-inset {
-          place[#line(start: (box-border-x, text-position.y + shift-y), end: (box-border-x, box-pos.top + outer-box-inset), stroke: orange)]
+          place[#line(start: (box-border-x, text-position.y + shift-y), end: (box-border-x, box-pos.top + outer-box-inset), stroke: stroke)]
         } else if text-position.y + shift-y.to-absolute() > box-pos.bottom - outer-box-inset {
-          place[#line(start: (box-border-x, text-position.y + shift-y), end: (box-border-x, box-pos.bottom - outer-box-inset), stroke: orange)]
+          place[#line(start: (box-border-x, text-position.y + shift-y), end: (box-border-x, box-pos.bottom - outer-box-inset), stroke: stroke)]
         }
       ]
     }
   })
 }
 
-#let todo(body, position: auto) = {
+#let todo(body, position: auto, stroke: orange) = {
   assert(
     position in (auto, left, right, "inline"),
     message: "Can only position todo either inline, or on the left or right side.",
   )
   if position == "inline" {
-    inline-todo(body)
+    inline-todo(body, stroke)
   } else {
-    side-todo(body, position)
+    side-todo(body, position, stroke)
   }
 }
