@@ -60,6 +60,7 @@
       #box(stroke: stroke, width: 100%)[
         #box(body, inset: 0.2em)
       ]
+      #outline-entry(body)
     ]
 
     // Create a state that accumulates all the todo box sizes of the current page
