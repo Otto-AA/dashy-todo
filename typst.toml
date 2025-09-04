@@ -1,6 +1,6 @@
 [package]
 name = "dashy-todo"
-version = "0.1.0"
+version = "0.1.1"
 entrypoint = "lib/todo.typ"
 authors = ["Otto-AA"]
 license = "MIT-0"
