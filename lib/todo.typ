@@ -59,8 +59,8 @@
     let todo-box = box(inset: outer-box-inset, width: page-margin-box.width)[
       #box(stroke: stroke, width: 100%)[
         #box(body, inset: 0.2em)
+        #outline-entry(body)
       ]
-      #outline-entry(body)
     ]
 
     // Create a state that accumulates all the todo box sizes of the current page
