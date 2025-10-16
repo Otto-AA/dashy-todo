@@ -1,6 +1,47 @@
 #let rel-to-abs = (rel, size) => rel.length + rel.ratio * size
 
 // must run within a context
+#let get-right-page-margin() = {
+  if "inside" in page.margin.keys() or "outside" in page.margin.keys() {
+    if calc.even(here().page()) {
+      if page.binding == auto or page.binding == left {
+        page.margin.inside
+      } else {
+        page.margin.outside
+      }
+    } else { 
+      if page.binding == auto or page.binding == left {
+        page.margin.outside
+      } else {
+        page.margin.inside
+      }
+    }
+  } else {
+    page.margin.right
+  }
+}
+
+// must run within a context
+#let get-left-page-margin() = {
+  if "inside" in page.margin.keys() or "outside" in page.margin.keys() {
+    if calc.even(here().page()) {
+      if page.binding == auto or page.binding == left {
+        page.margin.outside
+      } else {
+        page.margin.inside
+      }
+    } else { 
+      if page.binding == auto or page.binding == left {
+        page.margin.inside
+      } else {
+        page.margin.outside
+      }
+    }
+  } else {
+    page.margin.left
+  }
+} 
+
 #let calc-side-margin(side) = {
   // https://typst.app/docs/reference/layout/page/#parameters-margin
   let auto-margin = calc.min(page.width, page.height) * 2.5 / 21
@@ -10,13 +51,13 @@
   } else if type(page.margin) == relative {
     rel-to-abs(page.margin, page.width)
   } else {
-    if side == left and page.margin.left == auto or side == right and page.margin.right == auto {
+    if side == left and get-left-page-margin() == auto or side == right and get-right-page-margin() == auto {
       auto-margin
     } else {
       if side == left {
-        rel-to-abs(page.margin.left, page.width)
+        rel-to-abs(get-left-page-margin(), page.width)
       } else {
-        rel-to-abs(page.margin.right, page.width)
+        rel-to-abs(get-right-page-margin(), page.width)
       }
     }
   }
