@@ -185,6 +185,8 @@
     position in (auto, left, right, "inline"),
     message: "Can only position todo either inline, or on the left or right side.",
   )
+  // do not influence line numbering
+  set par.line(numbering: none)
   if position == "inline" {
     inline-todo(body, stroke)
   } else {
