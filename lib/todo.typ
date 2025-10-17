@@ -1,6 +1,10 @@
 #import "box-placement.typ": calculate-box-positions
 #import "side-margin.typ": calculate-page-margin-box
 
+// set to true for additional debugging output
+#let debug = false
+#let debug-only(body) = { if debug { body } }
+
 #let to-string(content) = {
   if type(content) == str {
     content
@@ -74,39 +78,102 @@
     boxes.update(boxes => {
       boxes.push((
         height: box-size.height, // Height of the box in pt, including margins
-        preferred-pos: text-position.y - shift-y // Where is the ideal y-position for the box?
+        preferred-pos: text-position.y - shift-y, // Where is the ideal y-position for the box?
       ))
       return boxes
     })
 
     let boxes = boxes.final()
 
-    if boxes.len() > box-index { // The typst compiler will skip state updates during initial layout, leaving the list empty, leading to boxes.len() < box-index. To avoid compiler errors, we'll wait for the states to be updated before placing the boxes
+    if boxes.len() > box-index {
+      // The typst compiler will skip state updates during initial layout, leaving the list empty, leading to boxes.len() < box-index. To avoid compiler errors, we'll wait for the states to be updated before placing the boxes
       let box-positions = calculate-box-positions(boxes)
 
       // This place will shift the coordinate system so (0, 0) will address the top left corner of the page
-      place(dx: - text-position.x, dy: - text-position.y)[
+      place(dx: -text-position.x, dy: -text-position.y)[
         // Retrieve the calculated position for the current box & render it
         #let box-pos = box-positions.at(box-index)
-        #place(dx: page-margin-box.x, dy: box-pos.top)[#todo-box]
+        #let box-dx = if text.dir == ltr or text.dir == auto { page-margin-box.x } else {
+          page-margin-box.x + page-margin-box.width
+        }
+        #place(dx: box-dx, dy: box-pos.top)[#todo-box]
+
+        // for debugging output, set debug = true at the top of this file
+        #let debug-dx-margin = if text.dir == ltr or text.dir == auto { page-margin-box.x } else {
+          page-margin-box.x + page-margin-box.width
+        }
+        #debug-only(place(
+          dx: debug-dx-margin,
+          dy: page-margin-box.y,
+          rect(
+            width: page-margin-box.width,
+            height: page-margin-box.height,
+            stroke: (thickness: 1pt, paint: gray, dash: "dashed"),
+          ),
+        ))
+        #let debug-line-dx = if text.dir == ltr or text.dir == auto { 0pt } else { page.width }
+        #debug-only(place(dx: debug-line-dx, dy: box-pos.top, line(start: (0pt, 0pt), end: (page.width, 0pt), stroke: (
+          thickness: 1pt,
+          paint: blue,
+          dash: "dotted",
+        ))))
+        #debug-only(place(dx: debug-line-dx, dy: box-pos.bottom, line(
+          end: (page.width, 0pt),
+          stroke: (
+            thickness: 1pt,
+            paint: blue,
+            dash: "dotted",
+          ),
+        )))
+        #let debug-circle-dx = if text.dir == ltr or text.dir == auto { -4pt } else { 4pt }
+        #debug-only(place(
+          dx: text-position.x + debug-circle-dx,
+          dy: text-position.y - 4pt,
+          circle(radius: 4pt, stroke: (thickness: 0.5pt, paint: blue)),
+        ))
 
         // Draw the tick mark within the text
-        #let line-margin = page-margin-box.x - text-position.x
-        #place[#line(start: (text-position.x, text-position.y), end: (text-position.x, text-position.y + shift-y), stroke: stroke)]
+        #place(dx: text-position.x, dy: text-position.y)[#line(
+          length: shift-y,
+          angle: 90deg,
+          stroke: stroke,
+        )]
 
         // Horizontally connect the tick mark to the position of the box
+        #let distance-tick-to-box-x = if side == left {
+          text-position.x - page-margin-box.width + outer-box-inset
+        } else {
+          page-margin-box.x - text-position.x + outer-box-inset
+        }
+        #let tick-to-box-line-dx = if text.dir == ltr or text.dir == auto {
+          if side == left { text-position.x - distance-tick-to-box-x } else { text-position.x }
+        } else {
+          if side == left { text-position.x } else { text-position.x + distance-tick-to-box-x }
+        }
+
+        #place(dx: tick-to-box-line-dx, dy: text-position.y + shift-y, line(
+          length: distance-tick-to-box-x,
+          stroke: stroke,
+        ))
+
+        // If the box is above or below the line, connect it vertically
         #let box-border-x = if side == left {
-          page-margin-box.width - outer-box-inset
+          page-margin-box.x + page-margin-box.width - outer-box-inset
         } else {
           page-margin-box.x + outer-box-inset
         }
-        #place[#line(start: (text-position.x, text-position.y + shift-y), end: (box-border-x, text-position.y + shift-y), stroke: stroke)]
-
-        // If the box is above or below the line, connect it vertically
         #if text-position.y + shift-y.to-absolute() < box-pos.top + outer-box-inset {
-          place[#line(start: (box-border-x, text-position.y + shift-y), end: (box-border-x, box-pos.top + outer-box-inset), stroke: stroke)]
+          place(dx: box-border-x)[#line(
+            start: (0pt, text-position.y + shift-y),
+            end: (0pt, box-pos.top + outer-box-inset),
+            stroke: stroke,
+          )]
         } else if text-position.y + shift-y.to-absolute() > box-pos.bottom - outer-box-inset {
-          place[#line(start: (box-border-x, text-position.y + shift-y), end: (box-border-x, box-pos.bottom - outer-box-inset), stroke: stroke)]
+          place(dx: box-border-x)[#line(
+            start: (0pt, text-position.y + shift-y),
+            end: (0pt, box-pos.bottom - outer-box-inset),
+            stroke: stroke,
+          )]
         }
       ]
     }

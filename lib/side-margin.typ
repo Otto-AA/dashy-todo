@@ -1,16 +1,30 @@
 #let rel-to-abs = (rel, size) => rel.length + rel.ratio * size
 
 // must run within a context
+#let resolve-page-binding() = {
+  assert(
+    not (page.binding == auto and text.dir == auto),
+    message: "Could not infer page margins. Please use `#set page(binding: left)` or `#set page(binding: right)` or `#set text(dir: left)` or `#set text(dir: right)`.",
+  )
+
+  if page.binding == left or (page.binding == auto and text.dir == ltr) {
+    left
+  } else {
+    right
+  }
+}
+
+// must run within a context
 #let get-right-page-margin() = {
   if "inside" in page.margin.keys() or "outside" in page.margin.keys() {
     if calc.even(here().page()) {
-      if page.binding == auto or page.binding == left {
+      if resolve-page-binding() == left {
         page.margin.inside
       } else {
         page.margin.outside
       }
-    } else { 
-      if page.binding == auto or page.binding == left {
+    } else {
+      if resolve-page-binding() == left {
         page.margin.outside
       } else {
         page.margin.inside
@@ -25,13 +39,13 @@
 #let get-left-page-margin() = {
   if "inside" in page.margin.keys() or "outside" in page.margin.keys() {
     if calc.even(here().page()) {
-      if page.binding == auto or page.binding == left {
+      if resolve-page-binding() == left {
         page.margin.outside
       } else {
         page.margin.inside
       }
-    } else { 
-      if page.binding == auto or page.binding == left {
+    } else {
+      if resolve-page-binding() == left {
         page.margin.inside
       } else {
         page.margin.outside
@@ -40,7 +54,7 @@
   } else {
     page.margin.left
   }
-} 
+}
 
 #let calc-side-margin(side) = {
   // https://typst.app/docs/reference/layout/page/#parameters-margin
